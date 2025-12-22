@@ -1,7 +1,5 @@
 package ec.edu.ups.icc.fundamentos01.products.controllers;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
-import ec.edu.ups.icc.fundamentos01.products.entities.Products;
-import ec.edu.ups.icc.fundamentos01.products.mappers.ProductsMapper;
+import ec.edu.ups.icc.fundamentos01.products.services.ProductsService;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 
 
@@ -25,102 +23,40 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/products")
 public class ProductsController {
 
-    private List<Products> products = new ArrayList<>();
-    private int currentId = 1;
+    private final ProductsService productService;
+
+    public ProductsController(ProductsService productService) {
+        this.productService = productService;
+    }
 
         @GetMapping
     public List<ProductsResponseDto> findAll() {
-
-        List<ProductsResponseDto> dtos = new ArrayList<>();
-        for (Products product : products) {
-            dtos.add(ProductsMapper.toResponse(product));
-        }
-
-        return products.stream()
-                .map(ProductsMapper::toResponse)
-                .toList();
+        return productService.findAll();
     }
 
-            @GetMapping("/{id}")
+        @GetMapping("/{id}")
     public Object findOne(@PathVariable("id") int id) {
-
-        for (Products product : products) {
-            if (product.getId() == id) {
-                return ProductsMapper.toResponse(product);
-            }
-        }
-        return products.stream()
-                .filter(p -> p.getId() == id)
-                .findFirst()
-                .map(ProductsMapper::toResponse)
-                .orElseGet(() -> new ProductsResponseDto() { public String error = "Product not found"; });
+        return productService.findOne(id);
     }
 
-            @PostMapping
+        @PostMapping
     public ProductsResponseDto create(@RequestBody ProductsResponseDto dto) {
-        Products product = ProductsMapper.toEntity(currentId++, dto.name, dto.price, dto.stock);
-        products.add(product);
-        return ProductsMapper.toResponse(product);
+        return productService.create(dto);
     }
 
-            @PutMapping("/{id}")
+        @PutMapping("/{id}")
     public Object update(@PathVariable("id") int id, @RequestBody UpdateProductsDto dto) {
-
-        for (Products product : products) {
-            if (product.getId() == id) {
-                product.setName(dto.name);
-                product.setPrice(dto.price);
-                product.setStock(dto.stock);
-                return ProductsMapper.toResponse(product);
-            }
-        }
-
-        Products product = products.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-        if (product == null) return new Object() { public String error = "Product not found"; };
-
-        product.setName(dto.name);
-        product.setPrice(dto.price);
-        product.setStock(dto.stock);    
-        return ProductsMapper.toResponse(product);
+        return productService.update(id, dto);
     }
 
-           @PatchMapping("/{id}")
+        @PatchMapping("/{id}")
     public Object partialUpdate(@PathVariable("id") int id, @RequestBody PartialUpdateProductsDto dto) {
-
-        for (Products product : products) {
-            if (product.getId() == id) {
-                if (dto.name != null) product.setName(dto.name);
-                if (dto.price != null) product.setPrice(dto.price);
-                if (dto.stock != null) product.setStock(dto.stock);
-                return ProductsMapper.toResponse(product);
-            }
-        }
-        Products product = products.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-        if (product == null) return new Object() { public String error = "Product not found"; };
-
-        if (dto.name != null) product.setName(dto.name);
-        if (dto.price != null) product.setPrice(dto.price);
-        if (dto.stock != null) product.setStock(dto.stock);
-
-        return ProductsMapper.toResponse(product);
+        return productService.partialUpdate(id, dto);
     }
 
         @DeleteMapping("/{id}")
     public Object delete(@PathVariable("id") int id) {
-
-        Iterator<Products> iterator = products.iterator();
-        while (iterator.hasNext()) {
-            Products product = iterator.next();
-            if (product.getId() == id) {
-                iterator.remove();
-                return new Object() { public String message = "Deleted successfully"; };
-            }
-        }
-
-        boolean exists = products.removeIf(p -> p.getId() == id);
-        if (!exists) return new Object() { public String error = "Product not found"; };
-
-        return new Object() { public String message = "Deleted successfully"; };
+        return productService.delete(id);
     }
     
 }

@@ -1,7 +1,5 @@
 package ec.edu.ups.icc.fundamentos01.users.controllers;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -19,131 +17,48 @@ import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
-import ec.edu.ups.icc.fundamentos01.users.entities.User;
-import ec.edu.ups.icc.fundamentos01.users.mappers.UserMapper;
+import ec.edu.ups.icc.fundamentos01.users.services.UserService;
 
 @RestController
 @RequestMapping("/users")
 public class UsersController {
 
-    private List<User> users = new ArrayList<>();
-    private int currentId = 1;
+    private final UserService userService;
+
+    public UsersController(UserService userService) {
+        this.userService = userService;
+    }
 
         @GetMapping
     public List<UserResponseDto> findAll() {
-
-        // Programación tradicional iterativa para mapear cada User a UserResponseDto
-        List<UserResponseDto> dtos = new ArrayList<>();
-        for (User user : users) {
-            dtos.add(UserMapper.toResponse(user));
-        }
-        //return dtos;
-
-        // Programación funcional para mapear cada User a UserResponseDto
-        return users.stream()
-                .map(UserMapper::toResponse)
-                .toList();
+        return userService.findAll();
     }
 
         @GetMapping("/{id}")
     public Object findOne(@PathVariable("id") int id) {
-
-      // Programación tradicional iterativa para mapear cada User a UserResponseDto
-      // Busqueda Lineal
-        for (User user : users) {
-            if (user.getId() == id) {
-                return UserMapper.toResponse(user);
-            }
-        }
-        // return new Object() {
-        //     public String error = "User not found";
-        // };
-
-      // Programación funcional para mapear cada User a UserResponseDto
-      // Busqueda Lineal
-        return users.stream()
-                .filter(u -> u.getId() == id)
-                .findFirst()
-                .map(UserMapper::toResponse)
-                .orElseGet(() -> new UserResponseDto() { public String error = "User not found"; });
+        return userService.findOne(id);
     }
 
         @PostMapping
     public UserResponseDto create(@RequestBody CreateUserDto dto) {
-        User user = UserMapper.toEntity(currentId++, dto.name, dto.email);
-        users.add(user);
-        return UserMapper.toResponse(user);
+        return userService.create(dto);
     }
 
         @PutMapping("/{id}")
     public Object update(@PathVariable("id") int id, @RequestBody UpdateUserDto dto) {
-
-        // Programacion tradicional iterativa
-        for (User user : users) {
-            if (user.getId() == id) {
-                user.setName(dto.name);
-                user.setEmail(dto.email);
-                return UserMapper.toResponse(user);
-            }
-        }
-        // return new Object() { 
-        //     public String error = "User not found"; 
-        // };
-      
-        // Programacion funcional
-        User user = users.stream().filter(u -> u.getId() == id).findFirst().orElse(null);
-        if (user == null) return new Object() { public String error = "User not found"; };
-
-        user.setName(dto.name);
-        user.setEmail(dto.email);
-
-        return UserMapper.toResponse(user);
+        return userService.update(id, dto);
     }
 
 
        @PatchMapping("/{id}")
     public Object partialUpdate(@PathVariable("id") int id, @RequestBody PartialUpdateUserDto dto) {
-
-      // Programacion tradicional iterativa
-        for (User user : users) {
-          // ESTE ES EL CAMBIO pero deberia estar en un metodo aparte para evitar duplicacion de codigo y mejorar mantenibilidad con separacion de responsabilidades.
-            if (user.getId() == id) {
-                if (dto.name != null) user.setName(dto.name);
-                if (dto.email != null) user.setEmail(dto.email);
-                return UserMapper.toResponse(user);
-            }
-        }
-        // return new Object() { 
-        //     public String error = "User not found"; 
-        // };
-        // Programacion funcional
-        User user = users.stream().filter(u -> u.getId() == id).findFirst().orElse(null);
-        if (user == null) return new Object() { public String error = "User not found"; };
-
-        if (dto.name != null) user.setName(dto.name);
-        if (dto.email != null) user.setEmail(dto.email);
-
-        return UserMapper.toResponse(user);
+        return userService.partialUpdate(id, dto);
     }
 
     
     @DeleteMapping("/{id}")
     public Object delete(@PathVariable("id") int id) {
-      // Programacion tradicional iterativa
-        Iterator<User> iterator = users.iterator();
-        while (iterator.hasNext()) {
-            User user = iterator.next();
-            if (user.getId() == id) {
-                iterator.remove();
-                return new Object() { public String message = "Deleted successfully"; };
-            }
-        }
-        // return new Object() { public String error = "User not found"; };
-      // Programacion funcional
-        boolean exists = users.removeIf(u -> u.getId() == id);
-        if (!exists) return new Object() { public String error = "User not found"; };
-
-        return new Object() { public String message = "Deleted successfully"; };
+        return userService.delete(id);
     }
 
 }
