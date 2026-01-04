@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
@@ -35,28 +36,28 @@ public class ProductsController {
     }
 
         @GetMapping("/{id}")
-    public Object findOne(@PathVariable("id") int id) {
+    public ProductsResponseDto findOne(@PathVariable("id") int id) {
         return productService.findOne(id);
     }
 
         @PostMapping
-    public ProductsResponseDto create(@RequestBody ProductsResponseDto dto) {
+    public ProductsResponseDto create(@RequestBody CreateProductsDto dto) {
         return productService.create(dto);
     }
 
         @PutMapping("/{id}")
-    public Object update(@PathVariable("id") int id, @RequestBody UpdateProductsDto dto) {
+    public ProductsResponseDto update(@PathVariable("id") int id, @RequestBody UpdateProductsDto dto) {
         return productService.update(id, dto);
     }
 
         @PatchMapping("/{id}")
-    public Object partialUpdate(@PathVariable("id") int id, @RequestBody PartialUpdateProductsDto dto) {
+    public ProductsResponseDto partialUpdate(@PathVariable("id") int id, @RequestBody PartialUpdateProductsDto dto) {
         return productService.partialUpdate(id, dto);
     }
 
         @DeleteMapping("/{id}")
-    public Object delete(@PathVariable("id") int id) {
-        return productService.delete(id);
+    public void delete(@PathVariable("id") int id) {
+        productService.delete(id);
     }
     
 }

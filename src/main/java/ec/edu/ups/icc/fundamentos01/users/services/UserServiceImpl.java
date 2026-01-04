@@ -2,71 +2,163 @@ package ec.edu.ups.icc.fundamentos01.users.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import ec.edu.ups.icc.fundamentos01.exceptions.ResourceAlreadyExistsException;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
-import ec.edu.ups.icc.fundamentos01.users.entities.User;
+import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 import ec.edu.ups.icc.fundamentos01.users.mappers.UserMapper;
+import ec.edu.ups.icc.fundamentos01.users.models.User;
+import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    private List<User> users = new ArrayList<>();
-    private int currentId = 1;
+    private final UserRepository userRepo;
 
+    public UserServiceImpl(UserRepository userRepo) {
+        this.userRepo = userRepo;
+    }
+
+    // Actualizar código de los métodos para usar userRepo
+    //
+    // @Override
+    // public List<UserResponseDto> findAll() {
+
+    // // 1. El repositorio devuelve entidades JPA (UserEntity)
+    // return userRepo.findAll()
+    // .stream()
+
+    // // 2. Cada UserEntity se transforma en un modelo de dominio User
+    // // Aquí se desacopla la capa de persistencia de la lógica de negocio
+    // .map(User::fromEntity)
+
+    // // 3. El modelo de dominio se convierte en DTO de respuesta
+    // // Solo se exponen los campos permitidos por la API
+    // .map(UserMapper::toResponse)
+
+    // // 4. Se recopila el resultado final como una lista de DTOs
+    // .toList();
+    // }
+
+    // Forma iterativa tradicional
     @Override
     public List<UserResponseDto> findAll() {
-        return users.stream().map(UserMapper::toResponse).toList();
+
+        // Lista final que se devolverá al controlador
+        List<UserResponseDto> response = new ArrayList<>();
+
+        // 1. Obtener todas las entidades desde la base de datos
+        List<UserEntity> entities = userRepo.findAll();
+
+        // 2. Iterar sobre cada entidad
+        for (UserEntity entity : entities) {
+
+            // 3. Convertir la entidad en modelo de dominio
+            User user = User.fromEntity(entity);
+
+            // 4. Convertir el modelo de dominio en DTO de respuesta
+            UserResponseDto dto = UserMapper.toResponse(user);
+
+            // 5. Agregar el DTO a la lista de resultados
+            response.add(dto);
+        }
+
+        // 6. Retornar la lista final de DTOs
+        return response;
     }
 
     @Override
-    public Object findOne(int id) {
-        return users.stream()
-                .filter(u -> u.getId() == id)
-                .findFirst()
+    public UserResponseDto findOne(int id) {
+        return userRepo.findById((long) id)
+                .map(User::fromEntity)
                 .map(UserMapper::toResponse)
-                .orElseGet(() -> new UserResponseDto() { public String error = "User not found"; });
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
     }
 
     @Override
     public UserResponseDto create(CreateUserDto dto) {
-        User user = UserMapper.toEntity(currentId++, dto.name, dto.email);
-        users.add(user);
-        return UserMapper.toResponse(user);
+        // Validar que el email no exista ya ANTES de intentar insertar
+        if (userRepo.findByEmail(dto.email).isPresent()) {
+            throw new ResourceAlreadyExistsException("El email '" + dto.email + "' ya está registrado");
+        }
+        
+        return Optional.of(dto)
+                .map(UserMapper::fromCreateDto)
+                .map(User::toEntity)
+                .map(userRepo::save)
+                .map(User::fromEntity)
+                .map(UserMapper::toResponse)
+                .orElseThrow(() -> new IllegalStateException("Error al crear el usuario"));
     }
 
     @Override
-    public Object update(int id, UpdateUserDto dto) {
-        User user = users.stream().filter(u -> u.getId() == id).findFirst().orElse(null);
-        if (user == null) return new Object() { public String error = "User not found"; };
+    public UserResponseDto update(int id, UpdateUserDto dto) {
 
-        user.setName(dto.name);
-        user.setEmail(dto.email);
+        return userRepo.findById((long) id)
+                // Entity → Domain
+                .map(User::fromEntity)
 
-        return UserMapper.toResponse(user);
+                // Aplicar cambios permitidos en el dominio
+                .map(user -> user.update(dto))
+
+                // Domain → Entity
+                .map(User::toEntity)
+
+                // Persistencia
+                .map(userRepo::save)
+
+                // Entity → Domain
+                .map(User::fromEntity)
+
+                // Domain → DTO
+                .map(UserMapper::toResponse)
+
+                // Error controlado si no existe
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
     }
 
     @Override
-    public Object partialUpdate(int id, PartialUpdateUserDto dto) {
-        User user = users.stream().filter(u -> u.getId() == id).findFirst().orElse(null);
-        if (user == null) return new Object() { public String error = "User not found"; };
+    public UserResponseDto partialUpdate(int id, PartialUpdateUserDto dto) {
 
-        if (dto.name != null) user.setName(dto.name);
-        if (dto.email != null) user.setEmail(dto.email);
+        return userRepo.findById((long) id)
+                // Entity → Domain
+                .map(User::fromEntity)
 
-        return UserMapper.toResponse(user);
+                // Aplicar solo los cambios presentes
+                .map(user -> user.partialUpdate(dto))
+
+                // Domain → Entity
+                .map(User::toEntity)
+
+                // Persistencia
+                .map(userRepo::save)
+
+                // Entity → Domain
+                .map(User::fromEntity)
+
+                // Domain → DTO
+                .map(UserMapper::toResponse)
+
+                // Error si no existe
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
     }
 
-    @Override
-    public Object delete(int id) {
-        boolean removed = users.removeIf(u -> u.getId() == id);
-        if (!removed) return new Object() { public String error = "User not found"; };
-
-        return new Object() { public String message = "Deleted successfully"; };
+   @Override
+    public void delete(int id) {
+          // Verifica existencia y elimina
+        userRepo.findById((long) id)
+        .ifPresentOrElse(
+            userRepo::delete,
+            () -> {
+                throw new IllegalStateException("Usuario no encontrado");
+            }
+        );
     }
 
 }
