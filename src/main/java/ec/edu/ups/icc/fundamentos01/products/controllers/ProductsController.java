@@ -18,7 +18,6 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.services.ProductsService;
-import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.RequestMapping;
