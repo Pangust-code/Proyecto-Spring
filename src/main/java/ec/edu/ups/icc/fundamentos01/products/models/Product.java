@@ -15,30 +15,35 @@ public class Product {
     private BigDecimal price;
     private Integer stock;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     /**
      * Constructor básico para nuevos productos
      */
     public Product(int id, String name, BigDecimal price, Integer stock) {
+
+        if (name == null || name.isBlank())
+            throw new IllegalArgumentException("Nombre inválido");
+        if (price == null || price.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Precio inválido");
+        if (stock == null || stock < 0)
+            throw new IllegalArgumentException("Stock inválido");
+
         this.id = id;
         this.name = name;
         this.price = price;
         this.stock = stock;
         this.createdAt = null;  // Se asignará por PrePersist
-        this.updatedAt = null;  // Se asignará por PreUpdate
     }
 
     /**
      * Constructor completo incluyendo fechas (para conversiones desde entidad)
      */
-    public Product(int id, String name, BigDecimal price, Integer stock, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Product(int id, String name, BigDecimal price, Integer stock, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.stock = stock;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     /**
@@ -52,8 +57,7 @@ public class Product {
             entity.getName(),
             entity.getPrice(),
             entity.getStock(),
-            entity.getCreatedAt(),
-            entity.getUpdatedAt()
+            entity.getCreatedAt()
         );
     }
 
@@ -74,9 +78,6 @@ public class Product {
         if (this.createdAt != null) {
             entity.setCreatedAt(this.createdAt);
         }
-        if (this.updatedAt != null) {
-            entity.setUpdatedAt(this.updatedAt);
-        }
         
         return entity;
     }
@@ -87,8 +88,7 @@ public class Product {
         dto.name = this.name;
         dto.price = this.price;
         dto.stock = this.stock;
-        dto.createdAt = this.createdAt;
-        dto.updatedAt = this.updatedAt;
+        dto.createdAt = this.createdAt.toString();
         return dto;
     }
 
@@ -158,11 +158,4 @@ public class Product {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }

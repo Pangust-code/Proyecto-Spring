@@ -16,8 +16,7 @@ public class UserMapper {
         dto.id = user.getId();
         dto.name = user.getName();
         dto.email = user.getEmail();
-        dto.createdAt = user.getCreatedAt();
-        dto.updatedAt = user.getUpdatedAt();
+        dto.createdAt = user.getCreatedAt().toString();
         return dto;
     }
 

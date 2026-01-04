@@ -1,13 +1,11 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 public class ProductsResponseDto {
     public int id;
     public String name;
     public BigDecimal price;
     public Integer stock;
-    public LocalDateTime createdAt;
-    public LocalDateTime updatedAt;
+    public String createdAt;
 }

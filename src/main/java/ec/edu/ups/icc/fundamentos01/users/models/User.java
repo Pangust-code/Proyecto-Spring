@@ -16,41 +16,40 @@ public class User {
 
     // Getters y Setters
 
-    // ==================== FACTORY METHODS ====================
-
     private int id;
     private String name;
     private String email;
     private String password;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    /**
-     * Crea un User desde un DTO de creación
-     * @param dto DTO con datos del formulario
-     * @return instancia de User para lógica de negocio
-     */
-    //public static User fromDto(CreateUserDto dto) {
-      
     public User(int id, String name, String email, String password) {
+        if (name == null || name.isBlank())
+            throw new IllegalArgumentException("Nombre inválido");
+
+        if (email == null || !email.contains("@"))
+            throw new IllegalArgumentException("Email inválido");
+
+        if (password == null || password.length() < 8)
+            throw new IllegalArgumentException("Password inválido");
+
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
-        this.createdAt = null;  // Se asignará por PrePersist
-        this.updatedAt = null;  // Se asignará por PreUpdate
+        this.createdAt = LocalDateTime.now();
     }
+
+    // ==================== FACTORY METHODS ====================
 
     /**
      * Constructor completo incluyendo fechas (para conversiones desde entidad)
      */
-    public User(int id, String name, String email, String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(int id, String name, String email, String password, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public User update(UpdateUserDto dto) {
@@ -84,8 +83,7 @@ public class User {
             entity.getName(),
             entity.getEmail(),
             entity.getPassword(),
-            entity.getCreatedAt(),
-            entity.getUpdatedAt()
+            entity.getCreatedAt()
         );
     }
 
@@ -105,9 +103,6 @@ public class User {
         // Preservar fechas si existen (para actualizaciones)
         if (this.createdAt != null) {
             entity.setCreatedAt(this.createdAt);
-        }
-        if (this.updatedAt != null) {
-            entity.setUpdatedAt(this.updatedAt);
         }
         
         entity.setEmail(this.email);
@@ -153,14 +148,6 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public static User fromDto(CreateUserDto dto) {
