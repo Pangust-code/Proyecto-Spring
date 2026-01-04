@@ -2,6 +2,8 @@ package ec.edu.ups.icc.fundamentos01.products.controllers;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,6 +18,8 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.services.ProductsService;
+import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -41,8 +45,11 @@ public class ProductsController {
     }
 
         @PostMapping
-    public ProductsResponseDto create(@RequestBody CreateProductsDto dto) {
-        return productService.create(dto);
+    public ResponseEntity<ProductsResponseDto> create(
+            @Valid @RequestBody CreateProductsDto dto
+    ) {
+        ProductsResponseDto created = productService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
         @PutMapping("/{id}")

@@ -3,6 +3,7 @@ package ec.edu.ups.icc.fundamentos01.products.models;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import ec.edu.ups.icc.fundamentos01.exceptions.domain.BadRequestException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
@@ -22,12 +23,11 @@ public class Product {
     public Product(int id, String name, BigDecimal price, Integer stock) {
 
         if (name == null || name.isBlank())
-            throw new IllegalArgumentException("Nombre inválido");
+            throw new BadRequestException("Nombre inválido");
         if (price == null || price.compareTo(BigDecimal.ZERO) < 0)
-            throw new IllegalArgumentException("Precio inválido");
+            throw new BadRequestException("Precio inválido");
         if (stock == null || stock < 0)
-            throw new IllegalArgumentException("Stock inválido");
-
+            throw new BadRequestException("Stock inválido");
         this.id = id;
         this.name = name;
         this.price = price;

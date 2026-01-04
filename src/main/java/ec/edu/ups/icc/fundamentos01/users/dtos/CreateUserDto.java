@@ -18,4 +18,8 @@ public class CreateUserDto {
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     public String password;
+
+    public String email() {
+        return email;
+    }
 }

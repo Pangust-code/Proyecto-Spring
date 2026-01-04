@@ -6,7 +6,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import ec.edu.ups.icc.fundamentos01.exceptions.ResourceAlreadyExistsException;
+import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
+import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
@@ -24,6 +25,8 @@ public class ProductsServiceImpl implements ProductsService {
     public ProductsServiceImpl(ProductsRepository productsRepo) {
         this.productsRepo = productsRepo;
     }
+
+
 
     // Actualizar código de los métodos para usar productsRepo
     //
@@ -78,14 +81,14 @@ public class ProductsServiceImpl implements ProductsService {
         return productsRepo.findById((long) id)
                 .map(Product::fromEntity)
                 .map(Product::toResponseDto)
-                .orElseThrow(() -> new IllegalStateException("Producto no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
     }
 
     @Override
     public ProductsResponseDto create(CreateProductsDto dto) {
         // Validar que el nombre no exista ya ANTES de intentar insertar
         if (productsRepo.findByName(dto.name).isPresent()) {
-            throw new ResourceAlreadyExistsException("El nombre: '" + dto.name + "' ya está registrado");
+            throw new ConflictException("El nombre: '" + dto.name + "' ya está registrado");
         }
         
         return Optional.of(dto)
@@ -104,7 +107,7 @@ public class ProductsServiceImpl implements ProductsService {
                 // Domain → DTO
                 .map(Product::toResponseDto)
 
-                .orElseThrow(() -> new IllegalStateException("Error al crear el producto"));
+                .orElseThrow(() -> new ConflictException("Error al crear el producto" + dto));
     }
 
     @Override
@@ -129,7 +132,7 @@ public class ProductsServiceImpl implements ProductsService {
                 .map(Product::toResponseDto)
 
                 // Error controlado si no existe
-                .orElseThrow(() -> new IllegalStateException("Producto no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
     }
 
     @Override
@@ -154,7 +157,7 @@ public class ProductsServiceImpl implements ProductsService {
                 .map(Product::toResponseDto)
 
                 // Error si no existe
-                .orElseThrow(() -> new IllegalStateException("Producto no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
     }
 
    @Override
@@ -164,7 +167,7 @@ public class ProductsServiceImpl implements ProductsService {
         .ifPresentOrElse(
             productsRepo::delete,
             () -> {
-                throw new IllegalStateException("Producto no encontrado");
+                throw new NotFoundException("Producto con id: " + id + " no encontrado");
             }
         );
     }
