@@ -10,7 +10,7 @@ public class ProductsMapper {
      * Convierte un DTO de creación a un modelo Product
      */
     public static Product fromCreateDto(CreateProductsDto dto) {
-        Product product = new Product(0, dto.name, dto.price, dto.stock);
+        Product product = new Product(dto.name, dto.price, dto.stock);
         return product;
     }
 

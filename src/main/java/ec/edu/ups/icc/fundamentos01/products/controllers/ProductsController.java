@@ -39,7 +39,7 @@ public class ProductsController {
     }
 
         @GetMapping("/{id}")
-    public ProductsResponseDto findOne(@PathVariable("id") int id) {
+    public ProductsResponseDto findOne(@PathVariable("id") Long id) {
         return productService.findOne(id);
     }
 
@@ -52,17 +52,17 @@ public class ProductsController {
     }
 
         @PutMapping("/{id}")
-    public ProductsResponseDto update(@PathVariable("id") int id, @RequestBody UpdateProductsDto dto) {
+    public ProductsResponseDto update(@PathVariable("id") Long id, @RequestBody UpdateProductsDto dto) {
         return productService.update(id, dto);
     }
 
         @PatchMapping("/{id}")
-    public ProductsResponseDto partialUpdate(@PathVariable("id") int id, @RequestBody PartialUpdateProductsDto dto) {
+    public ProductsResponseDto partialUpdate(@PathVariable("id") Long id, @RequestBody PartialUpdateProductsDto dto) {
         return productService.partialUpdate(id, dto);
     }
 
         @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") int id) {
+    public void delete(@PathVariable("id") Long id) {
         productService.delete(id);
     }
     

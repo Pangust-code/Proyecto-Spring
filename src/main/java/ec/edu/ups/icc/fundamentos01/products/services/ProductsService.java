@@ -9,13 +9,14 @@ public interface ProductsService {
     
     List<ProductsResponseDto> findAll();
 
-    ProductsResponseDto findOne(int id);
+    ProductsResponseDto findOne(Long id);
 
     ProductsResponseDto create(CreateProductsDto dto);
 
-    ProductsResponseDto update(int id, UpdateProductsDto dto);
+    ProductsResponseDto update(Long id, UpdateProductsDto dto);
  
-    ProductsResponseDto partialUpdate(int id, PartialUpdateProductsDto dto);
+    ProductsResponseDto partialUpdate(Long id, PartialUpdateProductsDto dto);
 
-    void delete(int id);
+    void delete(Long id);
+
 }

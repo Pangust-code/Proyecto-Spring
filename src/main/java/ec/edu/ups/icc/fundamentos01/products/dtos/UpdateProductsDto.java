@@ -19,4 +19,6 @@ public class UpdateProductsDto {
     @NotBlank
     @Min(value = 0)
     public Integer stock;
+
+    public Long categoryId;
 }

@@ -2,29 +2,41 @@ package ec.edu.ups.icc.fundamentos01.products.services;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 import org.springframework.stereotype.Service;
 
-import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
+import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
+import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
+import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductsEntity;
-import ec.edu.ups.icc.fundamentos01.products.mappers.ProductsMapper;
 import ec.edu.ups.icc.fundamentos01.products.models.Product;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductsRepository;
+import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
+import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 
 @Service
 public class ProductsServiceImpl implements ProductsService {
 
     private final ProductsRepository productsRepo;
 
-    public ProductsServiceImpl(ProductsRepository productsRepo) {
+    private final UserRepository userRepository;
+
+    private final CategoryRepository categoryRepository;
+
+
+    public ProductsServiceImpl(ProductsRepository productsRepo, UserRepository userRepository, CategoryRepository categoryRepository) {
         this.productsRepo = productsRepo;
+        this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
     }
+
+
 
 
 
@@ -77,7 +89,7 @@ public class ProductsServiceImpl implements ProductsService {
     }
 
     @Override
-    public ProductsResponseDto findOne(int id) {
+    public ProductsResponseDto findOne(Long id) {
         return productsRepo.findById((long) id)
                 .map(Product::fromEntity)
                 .map(Product::toResponseDto)
@@ -86,34 +98,55 @@ public class ProductsServiceImpl implements ProductsService {
 
     @Override
     public ProductsResponseDto create(CreateProductsDto dto) {
-        // Validar que el nombre no exista ya ANTES de intentar insertar
-        if (productsRepo.findByName(dto.name).isPresent()) {
-            throw new ConflictException("El nombre: '" + dto.name + "' ya está registrado");
-        }
+        UserEntity owner = userRepository.findById(dto.userId)
+                .orElseThrow(() -> new NotFoundException("usuario no existe"));
+
+        CategoryEntity categoria = categoryRepository.findById(dto.categoriaId)
+                .orElseThrow(() -> new NotFoundException("Categoria no existe"));
+
+        Product newProduct = Product.fromDto(dto);
         
-        return Optional.of(dto)
-                // DTO → Domain
-                .map(ProductsMapper::fromCreateDto)
+        ProductsEntity entity = newProduct.toEntity(owner, categoria);
 
-                // Domain → Entity
-                .map(Product::toEntity)
+        ProductsEntity saved = productsRepo.save(entity);
 
-                // Persistencia
-                .map(productsRepo::save)
+        return toResponseDto(saved);
+    }
+    
 
-                // Entity → Domain
-                .map(Product::fromEntity)
+    private ProductsResponseDto toResponseDto(ProductsEntity entity){
 
-                // Domain → DTO
-                .map(Product::toResponseDto)
+        ProductsResponseDto dto = new ProductsResponseDto();
+        
+        // Campos básicos
+        dto.id = entity.getId();
+        dto.name = entity.getName();
+        dto.price = entity.getPrice();
+        dto.stock = entity.getStock();
+        
+        // Crear objeto User anidado
+        ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
+        userDto.id = entity.getOwner().getId().intValue();
+        userDto.name = entity.getOwner().getName();
+        userDto.email = entity.getOwner().getEmail();
+        dto.userId = userDto;
 
-                .orElseThrow(() -> new ConflictException("Error al crear el producto" + dto));
+        CategoriaResponseDto categoriaResponseDto = new CategoriaResponseDto();
+        categoriaResponseDto.id = entity.getCategory().getId();
+        categoriaResponseDto.name = entity.getCategory().getName();
+        categoriaResponseDto.description = entity.getCategory().getDescription();
+        dto.categoriaId = categoriaResponseDto;
+        
+        dto.createdAt = entity.getCreatedAt().toString();
+        dto.updatedAt = entity.getUpdatedAt().toString();
+        
+        return dto;
     }
 
     @Override
-    public ProductsResponseDto update(int id, UpdateProductsDto dto) {
+    public ProductsResponseDto update(Long id, UpdateProductsDto dto) {
 
-        return productsRepo.findById((long) id)
+        return productsRepo.findById((Long) id)
                 // Entity → Domain
                 .map(Product::fromEntity)
                 // Aplicar cambios permitidos en el dominio
@@ -136,9 +169,9 @@ public class ProductsServiceImpl implements ProductsService {
     }
 
     @Override
-    public ProductsResponseDto partialUpdate(int id, PartialUpdateProductsDto dto) {
+    public ProductsResponseDto partialUpdate(Long id, PartialUpdateProductsDto dto) {
 
-        return productsRepo.findById((long) id)
+        return productsRepo.findById(id)
                 // Entity → Domain
                 .map(Product::fromEntity)
                 // Aplicar solo los cambios presentes
@@ -161,7 +194,7 @@ public class ProductsServiceImpl implements ProductsService {
     }
 
    @Override
-    public void delete(int id) {
+    public void delete(Long id) {
           // Verifica existencia y elimina
         productsRepo.findById((long) id)
         .ifPresentOrElse(

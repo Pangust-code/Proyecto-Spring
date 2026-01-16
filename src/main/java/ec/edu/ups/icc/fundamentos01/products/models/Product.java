@@ -3,15 +3,18 @@ package ec.edu.ups.icc.fundamentos01.products.models;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.BadRequestException;
+import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductsEntity;
+import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 
 public class Product {
 
-    private int id;
+    private Long id;
     private String name;
     private BigDecimal price;
     private Integer stock;
@@ -20,7 +23,7 @@ public class Product {
     /**
      * Constructor básico para nuevos productos
      */
-    public Product(int id, String name, BigDecimal price, Integer stock) {
+    public Product(Long id, String name, BigDecimal price, Integer stock) {
 
         if (name == null || name.isBlank())
             throw new BadRequestException("Nombre inválido");
@@ -38,12 +41,18 @@ public class Product {
     /**
      * Constructor completo incluyendo fechas (para conversiones desde entidad)
      */
-    public Product(int id, String name, BigDecimal price, Integer stock, LocalDateTime createdAt) {
+    public Product(Long id, String name, BigDecimal price, Integer stock, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.stock = stock;
         this.createdAt = createdAt;
+    }
+
+    public Product(String name, BigDecimal price, Integer stock) {
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
     }
 
     /**
@@ -53,7 +62,7 @@ public class Product {
      */
     public static Product fromEntity(ProductsEntity entity) {
         return new Product(
-            entity.getId().intValue(),
+            entity.getId(),
             entity.getName(),
             entity.getPrice(),
             entity.getStock(),
@@ -116,13 +125,36 @@ public class Product {
         return this;
     }
 
+    public static Product fromDto(CreateProductsDto dto){
+        return new Product(dto.name, dto.price, dto.stock);
+    }
+
+    public ProductsEntity toEntity(UserEntity owner, CategoryEntity categoryEntity){
+        ProductsEntity entity = new ProductsEntity();
+
+        if (this.id > 0){
+            entity.setId(this.id);
+        }
+
+        entity.setName(this.name);
+
+        entity.setPrice(this.price);
+
+        entity.setStock(this.stock);
+
+        entity.setOwner(owner);
+
+        entity.setCategory(categoryEntity);
+
+        return entity;
+    }
     // ==================== GETTERS Y SETTERS ====================
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
