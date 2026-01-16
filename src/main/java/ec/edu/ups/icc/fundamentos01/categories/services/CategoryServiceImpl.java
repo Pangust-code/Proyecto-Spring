@@ -2,6 +2,8 @@ package ec.edu.ups.icc.fundamentos01.categories.services;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CreateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.dtos.UpdateCategoryDto;
@@ -11,7 +13,7 @@ import ec.edu.ups.icc.fundamentos01.categories.models.Category;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
-
+@Service
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepo;
