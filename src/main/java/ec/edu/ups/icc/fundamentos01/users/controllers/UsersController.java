@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
@@ -74,6 +75,17 @@ public class UsersController {
     // GET /api/users/{id}/products: productos del usuario.
     public List<ProductsResponseDto> findProductsByUserId(@PathVariable("id") Long id) {
         return userService.getProductsByUserId(id);
+    }
+
+    @GetMapping("/{id}/products-v2")
+    public List<ProductsResponseDto> findProductsByUserIdWithFilters(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "categoryId", required = false) Long categoryId
+    ) {
+        return userService.getProductsByUserIdWithFilters(id, name, minPrice, maxPrice, categoryId);
     }
 
 }
