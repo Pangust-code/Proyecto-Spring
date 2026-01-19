@@ -12,7 +12,13 @@ import java.util.List;
 @Repository
 public interface ProductsRepository extends JpaRepository<ProductsEntity, Long> {
 
+    java.util.List<ProductsEntity> findByNameContainingIgnoreCase(String name);
+
     Optional<ProductsEntity> findByName(String name);
+
+    java.util.List<ProductsEntity> findByPriceLessThan(Double price);
+
+    java.util.List<ProductsEntity> findByStockGreaterThan(Integer stock);
 
     List<ProductsEntity> findByOwnerId(Long id);
 
@@ -23,5 +29,7 @@ public interface ProductsRepository extends JpaRepository<ProductsEntity, Long> 
     List<ProductsEntity> findByCategoryName(String name);
 
     List<ProductsEntity> findByCategoryIdAndPriceGreaterThan(Long categoryId, Double price);
+
+
 
 }

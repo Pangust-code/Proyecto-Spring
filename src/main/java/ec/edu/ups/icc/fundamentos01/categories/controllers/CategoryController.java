@@ -17,6 +17,7 @@ import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CreateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.dtos.UpdateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.services.CategoryService;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import jakarta.validation.Valid;
 
 @RestController
@@ -58,6 +59,19 @@ public class CategoryController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+        // GET /api/categories/{id}/products/count: cuenta productos por categoria.
+    @GetMapping("/{id}/products/count")
+    public ResponseEntity<Long> countProductsByCategoryId(@PathVariable("id") Long id) {
+        Long count = categoryService.countProductsByCategoryId(id);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<ProductsResponseDto>> findProductsByCategoryId(@PathVariable("id") Long id) {
+        List<ProductsResponseDto> products = categoryService.getProductsByCategoryId(id);
+        return ResponseEntity.ok(products);
     }
 
 }

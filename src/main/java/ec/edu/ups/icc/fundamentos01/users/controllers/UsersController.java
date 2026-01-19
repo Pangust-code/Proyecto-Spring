@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
@@ -67,6 +68,12 @@ public class UsersController {
     public ResponseEntity<Void> delete(@PathVariable("id") int id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/products")
+    // GET /api/users/{id}/products: productos del usuario.
+    public List<ProductsResponseDto> findProductsByUserId(@PathVariable("id") Long id) {
+        return userService.getProductsByUserId(id);
     }
 
 }

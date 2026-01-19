@@ -2,6 +2,7 @@ package ec.edu.ups.icc.fundamentos01.products.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.BadRequestException;
@@ -144,8 +145,20 @@ public class Product {
 
         entity.setOwner(owner);
 
-        entity.setCategory(categoryEntity);
+        entity.setCategories(Set.of(categoryEntity));
 
+        return entity;
+    }
+
+    public ProductsEntity toEntity(UserEntity owner) {
+        ProductsEntity entity = new ProductsEntity();
+        if (this.id > 0) {
+            entity.setId((long) this.id);
+        }
+        entity.setName(this.name);
+        entity.setPrice(this.price);
+        entity.setStock(this.stock);
+        entity.setOwner(owner);
         return entity;
     }
     // ==================== GETTERS Y SETTERS ====================

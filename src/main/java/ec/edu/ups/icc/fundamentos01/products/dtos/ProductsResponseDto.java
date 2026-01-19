@@ -1,6 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
 
@@ -16,11 +17,11 @@ public class ProductsResponseDto {
 
     public UserSummaryDto userId;
 
-    public CategoriaResponseDto categoriaId;
+    public List<CategoriaResponseDto> categories;
 
     public static class UserSummaryDto {
 
-        public int id;
+        public Long id;
         public String name;
         public String email;
 
@@ -30,12 +31,12 @@ public class ProductsResponseDto {
         return userId;
     }
 
-    public CategoriaResponseDto getCategoriaId() {
-        return categoriaId;
+    public List<CategoriaResponseDto> getCategories() {
+        return categories;
     }
 
-    public void setCategoriaId(CategoriaResponseDto categoriaId) {
-        this.categoriaId = categoriaId;
+    public void setCategories(List<CategoriaResponseDto> categories) {
+        this.categories = categories;
     }
 
     

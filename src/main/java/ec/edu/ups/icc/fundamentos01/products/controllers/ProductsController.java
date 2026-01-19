@@ -17,6 +17,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductsDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ValidateProductsNameDto;
 import ec.edu.ups.icc.fundamentos01.products.services.ProductsService;
 import jakarta.validation.Valid;
 
@@ -64,6 +65,22 @@ public class ProductsController {
         @DeleteMapping("/{id}")
     public void delete(@PathVariable("id") Long id) {
         productService.delete(id);
+    }
+
+    @PostMapping("/validate-name")
+    public ResponseEntity<Boolean> validateProductName(@Valid @RequestBody ValidateProductsNameDto dto) {
+        productService.validateProductName(dto.name, dto.id);
+        return ResponseEntity.ok().body(true);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<ProductsResponseDto> findByUserId(@PathVariable("userId") Long userId) {
+        return productService.findByUserId(userId);
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public List<ProductsResponseDto> findByCategoryId(@PathVariable("categoryId") Long categoryId) {
+        return productService.findByCategoryId(categoryId);
     }
     
 }

@@ -19,4 +19,10 @@ public interface ProductsService {
 
     void delete(Long id);
 
+    boolean validateProductName(String name, int id);
+
+    List<ProductsResponseDto> findByUserId(Long userId);
+
+    List<ProductsResponseDto> findByCategoryId(Long categoryId);
+
 }

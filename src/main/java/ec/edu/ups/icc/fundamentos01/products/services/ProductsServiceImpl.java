@@ -1,14 +1,16 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
 import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
+import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductsDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductsDto;
@@ -37,6 +39,20 @@ public class ProductsServiceImpl implements ProductsService {
     }
 
 
+    private Set<CategoryEntity> validateAndGetCategories(Set<Long> categoryIds) {
+        Set<CategoryEntity> categories = new HashSet<>();
+        for (Long categoryId : categoryIds) {
+            CategoryEntity category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+            categories.add(category);
+        }
+        return categories;
+    }
+
+    private CategoryEntity validateCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+    }
 
 
 
@@ -98,15 +114,18 @@ public class ProductsServiceImpl implements ProductsService {
 
     @Override
     public ProductsResponseDto create(CreateProductsDto dto) {
-        UserEntity owner = userRepository.findById(dto.userId)
-                .orElseThrow(() -> new NotFoundException("usuario no existe"));
+        if (productsRepo.findByName(dto.name).isPresent()) {
+            throw new ConflictException("Ya existe un producto con el nombre: " + dto.name);
+        }
 
-        CategoryEntity categoria = categoryRepository.findById(dto.categoriaId)
-                .orElseThrow(() -> new NotFoundException("Categoria no existe"));
+        UserEntity owner = userRepository.findById(dto.userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + dto.userId));
+
+        Set<CategoryEntity> categories = validateAndGetCategories(dto.categoriaId);
 
         Product newProduct = Product.fromDto(dto);
-        
-        ProductsEntity entity = newProduct.toEntity(owner, categoria);
+        ProductsEntity entity = newProduct.toEntity(owner);
+        entity.setCategories(categories);
 
         ProductsEntity saved = productsRepo.save(entity);
 
@@ -117,80 +136,81 @@ public class ProductsServiceImpl implements ProductsService {
     private ProductsResponseDto toResponseDto(ProductsEntity entity){
 
         ProductsResponseDto dto = new ProductsResponseDto();
-        
+
         // Campos básicos
         dto.id = entity.getId();
         dto.name = entity.getName();
         dto.price = entity.getPrice();
         dto.stock = entity.getStock();
-        
-        // Crear objeto User anidado
+
         ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
-        userDto.id = entity.getOwner().getId().intValue();
+        userDto.id = entity.getOwner().getId();
         userDto.name = entity.getOwner().getName();
         userDto.email = entity.getOwner().getEmail();
         dto.userId = userDto;
 
-        CategoriaResponseDto categoriaResponseDto = new CategoriaResponseDto();
-        categoriaResponseDto.id = entity.getCategory().getId();
-        categoriaResponseDto.name = entity.getCategory().getName();
-        categoriaResponseDto.description = entity.getCategory().getDescription();
-        dto.categoriaId = categoriaResponseDto;
-        
+        dto.categories = entity.getCategories().stream()
+                .map(this::toCategoryResponseDto)
+                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                .toList();
+
         dto.createdAt = entity.getCreatedAt().toString();
         dto.updatedAt = entity.getUpdatedAt().toString();
-        
+
+        return dto;
+    }
+
+    private CategoriaResponseDto toCategoryResponseDto(CategoryEntity category) {
+        CategoriaResponseDto dto = new CategoriaResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
         return dto;
     }
 
     @Override
     public ProductsResponseDto update(Long id, UpdateProductsDto dto) {
 
-        return productsRepo.findById((Long) id)
-                // Entity → Domain
-                .map(Product::fromEntity)
-                // Aplicar cambios permitidos en el dominio
-                .map(product -> product.update(dto))
+        productsRepo.findByName(dto.name).ifPresent(existing -> {
+            if (existing.getId() != id) {
+                throw new ConflictException("Ya existe otro producto con el nombre: " + dto.name);
+            }
+        });
 
-                // Domain → Entity
-                .map(Product::toEntity)
-
-                // Persistencia
-                .map(productsRepo::save)
-
-                // Entity → Domain
-                .map(Product::fromEntity)
-
-                // Domain → DTO
-                .map(Product::toResponseDto)
-
-                // Error controlado si no existe
+        ProductsEntity existingEntity = productsRepo.findById((long) id)
                 .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
+
+        existingEntity.setName(dto.name);
+        existingEntity.setPrice(dto.price);
+        existingEntity.setStock(dto.stock);
+
+        Set<CategoryEntity> categories = validateAndGetCategories(dto.categoryId);
+        existingEntity.clearCategories();
+        existingEntity.setCategories(categories);
+
+        ProductsEntity saved = productsRepo.save(existingEntity);
+        return toResponseDto(saved);
     }
 
     @Override
     public ProductsResponseDto partialUpdate(Long id, PartialUpdateProductsDto dto) {
 
-        return productsRepo.findById(id)
-                // Entity → Domain
-                .map(Product::fromEntity)
-                // Aplicar solo los cambios presentes
-                .map(product -> product.partialUpdate(dto))
-
-                // Domain → Entity
-                .map(Product::toEntity)
-
-                // Persistencia
-                .map(productsRepo::save)
-
-                // Entity → Domain
-                .map(Product::fromEntity)
-
-                // Domain → DTO
-                .map(Product::toResponseDto)
-
-                // Error si no existe
+        ProductsEntity existingEntity = productsRepo.findById((long) id)
                 .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
+
+        if (dto.name != null) {
+            existingEntity.setName(dto.name);
+        }
+        
+        if (dto.price != null) {
+            existingEntity.setPrice(dto.price);
+        }
+        if (dto.stock != null) {
+            existingEntity.setStock(dto.stock);
+        }
+
+        ProductsEntity saved = productsRepo.save(existingEntity);
+        return toResponseDto(saved);
     }
 
    @Override
@@ -203,5 +223,37 @@ public class ProductsServiceImpl implements ProductsService {
                 throw new NotFoundException("Producto con id: " + id + " no encontrado");
             }
         );
+    }
+
+    @Override
+    public boolean validateProductName(String name, int id) {
+        productsRepo.findByName(name).ifPresent(existing -> {
+            if (existing.getId() != id) {
+                throw new ConflictException("Ya existe otro producto con el nombre: " + name);
+            }
+        });
+        return true;
+    }
+
+    @Override
+    public List<ProductsResponseDto> findByUserId(Long userId) {
+        // Verificar que el usuario existe
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
+
+        return productsRepo.findByOwnerId(userId)
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Override
+    public List<ProductsResponseDto> findByCategoryId(Long categoryId) {
+        validateCategory(categoryId);
+
+        return productsRepo.findByCategoryId(categoryId)
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 }

@@ -1,6 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -13,11 +14,11 @@ public class CreateProductsDto {
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     public String name;
 
-    @NotBlank(message = "El precio es obligatorio")
+    @NotNull(message = "El precio es obligatorio")
     @Min(value = 0, message = "El precio debe ser un valor positivo")   
     public BigDecimal price;
 
-    @NotBlank(message = "El stock es obligatorio")
+    @NotNull(message = "El stock es obligatorio")
     @Min(value = 0, message = "El stock debe ser un valor positivo")
     public Integer stock;
 
@@ -25,6 +26,7 @@ public class CreateProductsDto {
     public Long userId;
 
     @NotNull(message = "El ID de la categoria es obligatorio")
-    public Long categoriaId;
+    @Size(min = 1, message = "El producto debe tener al menos una categoría")
+    public Set<Long> categoriaId;
 
 }

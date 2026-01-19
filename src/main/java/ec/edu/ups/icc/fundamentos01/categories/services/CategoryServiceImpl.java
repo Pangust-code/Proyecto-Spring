@@ -13,13 +13,19 @@ import ec.edu.ups.icc.fundamentos01.categories.models.Category;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
+import ec.edu.ups.icc.fundamentos01.products.mappers.ProductsMapper;
+import ec.edu.ups.icc.fundamentos01.products.repositories.ProductsRepository;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepo;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepo) {
+    private final ProductsRepository productRepo;
+
+    public CategoryServiceImpl(CategoryRepository categoryRepo, ProductsRepository productRepo) {
         this.categoryRepo = categoryRepo;
+        this.productRepo = productRepo;
     }
 
     @Override
@@ -41,7 +47,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoriaResponseDto create(CreateCategoryDto dto) {
-
         // Validar que el nombre sea único
         if (categoryRepo.existsByName(dto.name)) {
             throw new ConflictException("Ya existe una categoría con el nombre: " + dto.name);
@@ -55,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryEntity saved = categoryRepo.save(entity);
 
         // Retornar DTO de respuesta
-        return CategoryMapper.toResponse(Category.fromEntity(saved));
+        return toResponse(Category.fromEntity(saved));
     }
 
     @Override
@@ -79,7 +84,7 @@ public class CategoryServiceImpl implements CategoryService {
         updated.setId(id); // Mantener el ID
         CategoryEntity saved = categoryRepo.save(updated);
 
-        return CategoryMapper.toResponse(Category.fromEntity(saved));
+        return toResponse(Category.fromEntity(saved));
     }
 
     @Override
@@ -90,6 +95,35 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Eliminación física
         categoryRepo.delete(category);
+    }
+
+    @Override
+    public Long countProductsByCategoryId(Long categoryId) {
+        // Verificar que la categoría existe
+        CategoryEntity category = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+
+        // Retornar el conteo de productos asociados
+        return (long) category.getProducts().size();
+    }
+
+    @Override
+    public List<ProductsResponseDto> getProductsByCategoryId(Long categoryId) {
+        categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoria no encontrada con ID: " + categoryId));
+
+        return productRepo.findByCategoryId(categoryId)
+                .stream()
+                .map(ProductsMapper::toResponse)
+                .toList();
+    }
+
+    private CategoriaResponseDto toResponse(Category category) {
+        CategoriaResponseDto dto = new CategoriaResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
+        return dto;
     }
 
 }

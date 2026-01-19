@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductsResponseDto;
+import ec.edu.ups.icc.fundamentos01.products.mappers.ProductsMapper;
+import ec.edu.ups.icc.fundamentos01.products.repositories.ProductsRepository;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
@@ -22,8 +25,11 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepo;
 
-    public UserServiceImpl(UserRepository userRepo) {
+    private final ProductsRepository productRepo;
+
+    public UserServiceImpl(UserRepository userRepo, ProductsRepository productRepo) {
         this.userRepo = userRepo;
+        this.productRepo = productRepo;
     }
 
     // Actualizar código de los métodos para usar userRepo
@@ -160,6 +166,18 @@ public class UserServiceImpl implements UserService {
                 throw new NotFoundException("Usuario con id: " + id + " no encontrado");
             }
         );
+    }
+
+    @Override
+    public List<ProductsResponseDto> getProductsByUserId(Long userId) {
+        // Consulta productos por ownerId usando ProductRepository.
+        userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
+
+        return productRepo.findByOwnerId(userId)
+                .stream()
+                .map(ProductsMapper::toResponse)
+                .toList();
     }
 
 }

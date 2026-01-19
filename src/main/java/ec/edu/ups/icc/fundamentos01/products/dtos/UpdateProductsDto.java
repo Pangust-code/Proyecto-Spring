@@ -1,6 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,5 +21,7 @@ public class UpdateProductsDto {
     @Min(value = 0)
     public Integer stock;
 
-    public Long categoryId;
+    @NotBlank
+    @Size(min = 1)
+    public Set<Long> categoryId;
 }
