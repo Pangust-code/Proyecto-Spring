@@ -22,13 +22,13 @@ public interface ProductsRepository extends JpaRepository<ProductsEntity, Long> 
 
     List<ProductsEntity> findByOwnerId(Long id);
 
-    List<ProductsEntity> findByCategoryId(Long id);
+    List<ProductsEntity> findByCategories_Id(Long id);
 
     List<ProductsEntity> findByOwnerName(String name);
 
-    List<ProductsEntity> findByCategoryName(String name);
+    List<ProductsEntity> findByCategories_Name(String name);
 
-    List<ProductsEntity> findByCategoryIdAndPriceGreaterThan(Long categoryId, Double price);
+    List<ProductsEntity> findByCategories_IdAndPriceGreaterThan(Long categoryId, Double price);
 
 
 

@@ -112,7 +112,7 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Categoria no encontrada con ID: " + categoryId));
 
-        return productRepo.findByCategoryId(categoryId)
+        return productRepo.findByCategories_Id(categoryId)
                 .stream()
                 .map(ProductsMapper::toResponse)
                 .toList();

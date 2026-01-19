@@ -251,7 +251,7 @@ public class ProductsServiceImpl implements ProductsService {
     public List<ProductsResponseDto> findByCategoryId(Long categoryId) {
         validateCategory(categoryId);
 
-        return productsRepo.findByCategoryId(categoryId)
+        return productsRepo.findByCategories_Id(categoryId)
                 .stream()
                 .map(this::toResponseDto)
                 .toList();

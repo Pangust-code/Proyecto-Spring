@@ -34,7 +34,7 @@ public class CategoryEntity extends BaseModel{
         this.description = description;
     }
 
-        public Set<ProductsEntity> getProducts() {
+    public Set<ProductsEntity> getProducts() {
         return products;
     }
 
