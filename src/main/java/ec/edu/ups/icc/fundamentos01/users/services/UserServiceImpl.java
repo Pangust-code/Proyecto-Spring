@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import ec.edu.ups.icc.fundamentos01.categories.dtos.CategoriaResponseDto;
+import ec.edu.ups.icc.fundamentos01.categories.entities.CategoryEntity;
 
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exceptions.domain.NotFoundException;
@@ -181,6 +185,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductsResponseDto> getProductsByUserIdWithFilters(
             Long userId,
             String name,
@@ -195,8 +200,54 @@ public class UserServiceImpl implements UserService {
         // Consultar productos desde UserRepository aplicando filtros en base de datos
         return userRepo.findProductsByUserIdWithFilters(userId, name, minPrice, maxPrice, categoryId)
                 .stream()
-                .map(ProductsMapper::toResponse)
+                .map(this::toResponseDto)
                 .toList();
+    }
+
+    /**
+     * Mapea ProductsEntity a ProductsResponseDto cargando relaciones LAZY dentro de la transacción
+     */
+    private ProductsResponseDto toResponseDto(ec.edu.ups.icc.fundamentos01.products.entities.ProductsEntity entity) {
+        ProductsResponseDto dto = new ProductsResponseDto();
+
+        // Campos básicos
+        dto.id = entity.getId();
+        dto.name = entity.getName();
+        dto.price = entity.getPrice();
+        dto.stock = entity.getStock();
+        dto.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
+        dto.updatedAt = entity.getUpdatedAt() != null ? entity.getUpdatedAt().toString() : null;
+
+        // Mapear usuario si existe (forzar carga LAZY)
+        if (entity.getOwner() != null) {
+            ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
+            userDto.id = entity.getOwner().getId();
+            userDto.name = entity.getOwner().getName();
+            userDto.email = entity.getOwner().getEmail();
+            dto.userId = userDto;
+        } else {
+            dto.userId = null;
+        }
+
+        // Mapear categorías si existen (forzar carga LAZY)
+        if (entity.getCategories() != null && !entity.getCategories().isEmpty()) {
+            dto.categories = entity.getCategories().stream()
+                    .map(this::toCategoryResponseDto)
+                    .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                    .toList();
+        } else {
+            dto.categories = null;
+        }
+
+        return dto;
+    }
+
+    private CategoriaResponseDto toCategoryResponseDto(CategoryEntity category) {
+        CategoriaResponseDto dto = new CategoriaResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
+        return dto;
     }
 
 }
