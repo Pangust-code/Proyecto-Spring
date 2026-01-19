@@ -16,13 +16,20 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByEmail(String email);
 
-    @Query("SELECT DISTINCT p FROM ProductsEntity p " +
-           "LEFT JOIN p.categories c " +
-           "WHERE p.owner.id = :userId " +
-           "AND (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+    @Query(value = "SELECT DISTINCT p.* FROM products p " +
+           "LEFT JOIN product_categories pc ON p.id = pc.product_id " +
+           "WHERE p.owner_id = :userId " +
+           "AND (CAST(:name AS TEXT) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS TEXT), '%'))) " +
            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
-              "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
-              "AND (:categoryId IS NULL OR c.id = :categoryId)")
-    List<ProductsEntity> findByOwnerWithFilter(@Param("userId") Long userId, @Param("name") String name, @Param("minPrice") Double minPrice, @Param("maxPrice") Double maxPrice, @Param("categoryId") Long categoryId);
+           "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+           "AND (:categoryId IS NULL OR pc.category_id = :categoryId)",
+           nativeQuery = true)
+    List<ProductsEntity> findProductsByUserIdWithFilters(
+        @Param("userId") Long userId,
+        @Param("name") String name,
+        @Param("minPrice") Double minPrice,
+        @Param("maxPrice") Double maxPrice,
+        @Param("categoryId") Long categoryId
+    );
 
 }

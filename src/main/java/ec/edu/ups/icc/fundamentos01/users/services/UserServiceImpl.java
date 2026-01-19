@@ -192,7 +192,8 @@ public class UserServiceImpl implements UserService {
         userRepo.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
 
-        return userRepo.findByOwnerWithFilter(userId, name, minPrice, maxPrice, categoryId)
+        // Consultar productos desde UserRepository aplicando filtros en base de datos
+        return userRepo.findProductsByUserIdWithFilters(userId, name, minPrice, maxPrice, categoryId)
                 .stream()
                 .map(ProductsMapper::toResponse)
                 .toList();
