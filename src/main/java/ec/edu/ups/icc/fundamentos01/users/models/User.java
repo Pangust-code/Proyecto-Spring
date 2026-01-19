@@ -79,8 +79,10 @@ public class User {
      * @return instancia de User para lógica de negocio
      */
     public static User fromEntity(UserEntity entity) {
+        Long entityId = entity.getId();
+        int id = entityId == null ? 0 : entityId.intValue();
         return new User(
-            entity.getId().intValue(),
+            id,
             entity.getName(),
             entity.getEmail(),
             entity.getPassword(),

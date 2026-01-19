@@ -8,7 +8,7 @@ import ec.edu.ups.icc.fundamentos01.products.entities.ProductsEntity;
 import ec.edu.ups.icc.fundamentos01.products.models.Product;
 
 public class ProductsMapper {
-    
+
     /**
      * Convierte un DTO de creación a un modelo Product
      */
@@ -19,6 +19,7 @@ public class ProductsMapper {
 
     /**
      * Convierte un Product a un DTO de respuesta
+     * 
      * @param product Modelo de dominio
      * @return DTO con los datos públicos del producto
      */
@@ -28,11 +29,14 @@ public class ProductsMapper {
         dto.name = product.getName();
         dto.price = product.getPrice();
         dto.stock = product.getStock();
-        dto.createdAt = product.getCreatedAt().toString();
+        dto.createdAt = product.getCreatedAt() != null ? product.getCreatedAt().toString() : null;
+        // Product no tiene información de usuario, se debe usar toResponse(ProductsEntity) para incluir relaciones
+        dto.userId = null;
+        dto.categories = null;
         return dto;
     }
 
-        /**
+    /**
      * Convierte ProductEntity a ProductResponseDto (con relaciones completas)
      */
     public static ProductsResponseDto toResponse(ProductsEntity entity) {
@@ -42,20 +46,29 @@ public class ProductsMapper {
         dto.name = entity.getName();
         dto.price = entity.getPrice();
         dto.stock = entity.getStock();
+        dto.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
+        dto.updatedAt = entity.getUpdatedAt() != null ? entity.getUpdatedAt().toString() : null;
 
-        ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
-        userDto.id = entity.getOwner().getId();
-        userDto.name = entity.getOwner().getName();
-        userDto.email = entity.getOwner().getEmail();
-        dto.userId = userDto;
+        // Mapear usuario si existe
+        if (entity.getOwner() != null) {
+            ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
+            userDto.id = entity.getOwner().getId();
+            userDto.name = entity.getOwner().getName();
+            userDto.email = entity.getOwner().getEmail();
+            dto.userId = userDto;
+        } else {
+            dto.userId = null;
+        }
 
-        dto.categories = entity.getCategories().stream()
-                .map(ProductsMapper::toCategoryResponseDto)
-                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
-                .toList();
-
-        dto.createdAt = entity.getCreatedAt().toString();
-        dto.updatedAt = entity.getUpdatedAt().toString();
+        // Mapear categorías si existen
+        if (entity.getCategories() != null && !entity.getCategories().isEmpty()) {
+            dto.categories = entity.getCategories().stream()
+                    .map(ProductsMapper::toCategoryResponseDto)
+                    .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                    .toList();
+        } else {
+            dto.categories = null;
+        }
 
         return dto;
     }

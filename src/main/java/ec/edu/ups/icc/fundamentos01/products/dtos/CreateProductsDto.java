@@ -3,6 +3,8 @@ package ec.edu.ups.icc.fundamentos01.products.dtos;
 import java.math.BigDecimal;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +29,7 @@ public class CreateProductsDto {
 
     @NotNull(message = "El ID de la categoria es obligatorio")
     @Size(min = 1, message = "El producto debe tener al menos una categoría")
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public Set<Long> categoriaId;
 
 }

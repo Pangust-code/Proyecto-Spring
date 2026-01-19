@@ -84,31 +84,27 @@ public class ProductsServiceImpl implements ProductsService {
         // Lista final que se devolverá al controlador
         List<ProductsResponseDto> response = new ArrayList<>();
 
-        // 1. Obtener todas las entidades desde la base de datos
-        List<ProductsEntity> entities = productsRepo.findAll();
+        // 1. Obtener todas las entidades desde la base de datos con sus relaciones
+        List<ProductsEntity> entities = productsRepo.findAllWithRelations();
 
         // 2. Iterar sobre cada entidad
         for (ProductsEntity entity : entities) {
 
-            // 3. Convertir la entidad en modelo de dominio
-            Product product = Product.fromEntity(entity);
+            // 3. Convertir la entidad en DTO de respuesta (incluye owner y categories)
+            ProductsResponseDto dto = toResponseDto(entity);
 
-            // 4. Convertir el modelo de dominio en DTO de respuesta
-            ProductsResponseDto dto = product.toResponseDto();
-
-            // 5. Agregar el DTO a la lista de resultados
+            // 4. Agregar el DTO a la lista de resultados
             response.add(dto);
         }
 
-        // 6. Retornar la lista final de DTOs
+        // 5. Retornar la lista final de DTOs
         return response;
     }
 
     @Override
     public ProductsResponseDto findOne(Long id) {
-        return productsRepo.findById((long) id)
-                .map(Product::fromEntity)
-                .map(Product::toResponseDto)
+        return productsRepo.findByIdWithRelations(id)
+                .map(this::toResponseDto)
                 .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
     }
 
@@ -143,19 +139,28 @@ public class ProductsServiceImpl implements ProductsService {
         dto.price = entity.getPrice();
         dto.stock = entity.getStock();
 
-        ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
-        userDto.id = entity.getOwner().getId();
-        userDto.name = entity.getOwner().getName();
-        userDto.email = entity.getOwner().getEmail();
-        dto.userId = userDto;
+        if (entity.getOwner() != null) {
+            ProductsResponseDto.UserSummaryDto userDto = new ProductsResponseDto.UserSummaryDto();
+            userDto.id = entity.getOwner().getId();
+            userDto.name = entity.getOwner().getName();
+            userDto.email = entity.getOwner().getEmail();
+            dto.userId = userDto;
+        } else {
+            dto.userId = null;
+        }
 
-        dto.categories = entity.getCategories().stream()
-                .map(this::toCategoryResponseDto)
-                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
-                .toList();
+        // Mapear categorías si existen y no están vacías
+        if (entity.getCategories() != null && !entity.getCategories().isEmpty()) {
+            dto.categories = entity.getCategories().stream()
+                    .map(this::toCategoryResponseDto)
+                    .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                    .toList();
+        } else {
+            dto.categories = null;
+        }
 
-        dto.createdAt = entity.getCreatedAt().toString();
-        dto.updatedAt = entity.getUpdatedAt().toString();
+        dto.createdAt = entity.getCreatedAt() == null ? null : entity.getCreatedAt().toString();
+        dto.updatedAt = entity.getUpdatedAt() == null ? null : entity.getUpdatedAt().toString();
 
         return dto;
     }
@@ -172,12 +177,13 @@ public class ProductsServiceImpl implements ProductsService {
     public ProductsResponseDto update(Long id, UpdateProductsDto dto) {
 
         productsRepo.findByName(dto.name).ifPresent(existing -> {
-            if (existing.getId() != id) {
+            Long existingId = existing.getId();
+            if (!java.util.Objects.equals(existingId, id)) {
                 throw new ConflictException("Ya existe otro producto con el nombre: " + dto.name);
             }
         });
 
-        ProductsEntity existingEntity = productsRepo.findById((long) id)
+        ProductsEntity existingEntity = productsRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
 
         existingEntity.setName(dto.name);
@@ -195,7 +201,7 @@ public class ProductsServiceImpl implements ProductsService {
     @Override
     public ProductsResponseDto partialUpdate(Long id, PartialUpdateProductsDto dto) {
 
-        ProductsEntity existingEntity = productsRepo.findById((long) id)
+        ProductsEntity existingEntity = productsRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto con id: " + id + " no encontrado"));
 
         if (dto.name != null) {
@@ -216,7 +222,7 @@ public class ProductsServiceImpl implements ProductsService {
    @Override
     public void delete(Long id) {
           // Verifica existencia y elimina
-        productsRepo.findById((long) id)
+        productsRepo.findById(id)
         .ifPresentOrElse(
             productsRepo::delete,
             () -> {
@@ -228,7 +234,7 @@ public class ProductsServiceImpl implements ProductsService {
     @Override
     public boolean validateProductName(String name, int id) {
         productsRepo.findByName(name).ifPresent(existing -> {
-            if (existing.getId() != id) {
+            if (!java.util.Objects.equals(existing.getId(), Long.valueOf(id))) {
                 throw new ConflictException("Ya existe otro producto con el nombre: " + name);
             }
         });
@@ -241,7 +247,7 @@ public class ProductsServiceImpl implements ProductsService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
 
-        return productsRepo.findByOwnerId(userId)
+        return productsRepo.findByOwnerIdWithRelations(userId)
                 .stream()
                 .map(this::toResponseDto)
                 .toList();
@@ -251,7 +257,7 @@ public class ProductsServiceImpl implements ProductsService {
     public List<ProductsResponseDto> findByCategoryId(Long categoryId) {
         validateCategory(categoryId);
 
-        return productsRepo.findByCategories_Id(categoryId)
+        return productsRepo.findByCategoryIdWithRelations(categoryId)
                 .stream()
                 .map(this::toResponseDto)
                 .toList();

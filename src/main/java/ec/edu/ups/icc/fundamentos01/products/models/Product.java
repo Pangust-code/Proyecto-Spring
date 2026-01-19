@@ -77,8 +77,8 @@ public class Product {
      */
     public ProductsEntity toEntity() {
         ProductsEntity entity = new ProductsEntity();
-        if (this.id > 0) {
-            entity.setId((long) this.id);
+        if (this.id != null && this.id > 0) {
+            entity.setId(this.id);
         }
         entity.setName(this.name);
         entity.setPrice(this.price);
@@ -98,7 +98,7 @@ public class Product {
         dto.name = this.name;
         dto.price = this.price;
         dto.stock = this.stock;
-        dto.createdAt = this.createdAt.toString();
+        dto.createdAt = this.createdAt == null ? null : this.createdAt.toString();
         return dto;
     }
 
@@ -133,7 +133,7 @@ public class Product {
     public ProductsEntity toEntity(UserEntity owner, CategoryEntity categoryEntity){
         ProductsEntity entity = new ProductsEntity();
 
-        if (this.id > 0){
+        if (this.id != null && this.id > 0){
             entity.setId(this.id);
         }
 
@@ -152,8 +152,8 @@ public class Product {
 
     public ProductsEntity toEntity(UserEntity owner) {
         ProductsEntity entity = new ProductsEntity();
-        if (this.id > 0) {
-            entity.setId((long) this.id);
+        if (this.id != null && this.id > 0) {
+            entity.setId(this.id);
         }
         entity.setName(this.name);
         entity.setPrice(this.price);
